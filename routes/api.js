@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const Disaster = require("../models/Disaster")
-const Resource = require("../models/resource")
+const Resource = require("../models/Resource")
 const HelpRequest = require("../models/HelpRequest")
 
 // Get all disasters
