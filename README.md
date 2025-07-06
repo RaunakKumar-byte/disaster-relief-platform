@@ -19,7 +19,7 @@ A community-driven disaster reporting and response platform that connects affect
 - CSS/JavaScript
 
 ## 🌐 Live Demo
-👉 [Visit the Live Site](https://your-live-link.onrender.com)
+👉 [Visit the Live Site](https://disaster-relief-platform.onrender.com)
 
 ## 📦 Installation
 
