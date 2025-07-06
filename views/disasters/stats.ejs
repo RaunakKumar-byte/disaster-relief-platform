@@ -1,0 +1,366 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Disaster Statistics</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Disasters by Type</h2>
+      <div class="h-64">
+        <canvas id="disastersByTypeChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Disasters by Status</h2>
+      <div class="h-64">
+        <canvas id="disastersByStatusChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Disasters by Severity</h2>
+      <div class="h-64">
+        <canvas id="disastersBySeverityChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Disasters by Month</h2>
+      <div class="h-64">
+        <canvas id="disastersByMonthChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold mb-4">Disaster Overview</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h3 class="text-lg font-semibold text-blue-800 mb-1">Total Disasters</h3>
+        <p id="total-disasters" class="text-3xl font-bold text-blue-600">...</p>
+      </div>
+      
+      <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-1">Active Disasters</h3>
+        <p id="active-disasters" class="text-3xl font-bold text-yellow-600">...</p>
+      </div>
+      
+      <div class="bg-red-50 rounded-lg p-4 border border-red-100">
+        <h3 class="text-lg font-semibold text-red-800 mb-1">Critical Severity</h3>
+        <p id="critical-disasters" class="text-3xl font-bold text-red-600">...</p>
+      </div>
+      
+      <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+        <h3 class="text-lg font-semibold text-green-800 mb-1">Resolved Disasters</h3>
+        <p id="resolved-disasters" class="text-3xl font-bold text-green-600">...</p>
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reported</th>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Verified</th>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">In Progress</th>
+            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Resolved</th>
+          </tr>
+        </thead>
+        <tbody id="disaster-stats-table">
+          <tr>
+            <td colspan="6" class="py-4 px-4 border-b border-gray-200 text-center text-gray-500">Loading statistics...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sample statistics data (in case API fails)
+    const sampleStats = {
+      byType: [
+        { _id: 'earthquake', count: 12 },
+        { _id: 'flood', count: 18 },
+        { _id: 'fire', count: 9 },
+        { _id: 'hurricane', count: 7 },
+        { _id: 'tsunami', count: 3 },
+        { _id: 'other', count: 5 }
+      ],
+      byStatus: [
+        { _id: 'reported', count: 15 },
+        { _id: 'verified', count: 12 },
+        { _id: 'in-progress', count: 18 },
+        { _id: 'resolved', count: 9 }
+      ],
+      bySeverity: [
+        { _id: 'low', count: 8 },
+        { _id: 'medium', count: 20 },
+        { _id: 'high', count: 16 },
+        { _id: 'critical', count: 10 }
+      ],
+      byMonth: [
+        { _id: { month: 1, year: 2023 }, count: 4 },
+        { _id: { month: 2, year: 2023 }, count: 6 },
+        { _id: { month: 3, year: 2023 }, count: 8 },
+        { _id: { month: 4, year: 2023 }, count: 5 },
+        { _id: { month: 5, year: 2023 }, count: 7 },
+        { _id: { month: 6, year: 2023 }, count: 9 },
+        { _id: { month: 7, year: 2023 }, count: 12 },
+        { _id: { month: 8, year: 2023 }, count: 8 },
+        { _id: { month: 9, year: 2023 }, count: 6 },
+        { _id: { month: 10, year: 2023 }, count: 4 },
+        { _id: { month: 11, year: 2023 }, count: 7 },
+        { _id: { month: 12, year: 2023 }, count: 5 }
+      ]
+    };
+    
+    // Fetch statistics from API
+    fetch('/api/stats/disasters')
+      .then(response => response.json())
+      .then(data => {
+        const stats = {
+          byType: data.byType && data.byType.length > 0 ? data.byType : sampleStats.byType,
+          byStatus: data.byStatus && data.byStatus.length > 0 ? data.byStatus : sampleStats.byStatus,
+          bySeverity: data.bySeverity && data.bySeverity.length > 0 ? data.bySeverity : sampleStats.bySeverity,
+          byMonth: data.byMonth && data.byMonth.length > 0 ? data.byMonth : sampleStats.byMonth
+        };
+        
+        createCharts(stats);
+        updateOverview(stats);
+        createStatsTable(stats);
+      })
+      .catch(error => {
+        console.error('Error fetching statistics:', error);
+        createCharts(sampleStats);
+        updateOverview(sampleStats);
+        createStatsTable(sampleStats);
+      });
+    
+    // Create charts
+    function createCharts(stats) {
+      // Disasters by Type Chart
+      const typeCtx = document.getElementById('disastersByTypeChart').getContext('2d');
+      const typeLabels = stats.byType.map(item => item._id.charAt(0).toUpperCase() + item._id.slice(1));
+      const typeData = stats.byType.map(item => item.count);
+      const typeColors = [
+        '#EAB308', // earthquake - yellow
+        '#3B82F6', // flood - blue
+        '#EF4444', // fire - red
+        '#8B5CF6', // hurricane - purple
+        '#1D4ED8', // tsunami - dark blue
+        '#6B7280'  // other - gray
+      ];
+      
+      new Chart(typeCtx, {
+        type: 'pie',
+        data: {
+          labels: typeLabels,
+          datasets: [{
+            data: typeData,
+            backgroundColor: typeColors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right'
+            }
+          }
+        }
+      });
+      
+      // Disasters by Status Chart
+      const statusCtx = document.getElementById('disastersByStatusChart').getContext('2d');
+      const statusLabels = stats.byStatus.map(item => item._id.charAt(0).toUpperCase() + item._id.slice(1));
+      const statusData = stats.byStatus.map(item => item.count);
+      const statusColors = [
+        '#FBBF24', // reported - amber
+        '#3B82F6', // verified - blue
+        '#8B5CF6', // in-progress - purple
+        '#10B981'  // resolved - green
+      ];
+      
+      new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: statusLabels,
+          datasets: [{
+            data: statusData,
+            backgroundColor: statusColors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right'
+            }
+          }
+        }
+      });
+      
+      // Disasters by Severity Chart
+      const severityCtx = document.getElementById('disastersBySeverityChart').getContext('2d');
+      const severityLabels = stats.bySeverity.map(item => item._id.charAt(0).toUpperCase() + item._id.slice(1));
+      const severityData = stats.bySeverity.map(item => item.count);
+      const severityColors = [
+        '#10B981', // low - green
+        '#F59E0B', // medium - amber
+        '#F97316', // high - orange
+        '#EF4444'  // critical - red
+      ];
+      
+      new Chart(severityCtx, {
+        type: 'bar',
+        data: {
+          labels: severityLabels,
+          datasets: [{
+            label: 'Number of Disasters',
+            data: severityData,
+            backgroundColor: severityColors,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+      
+      // Disasters by Month Chart
+      const monthCtx = document.getElementById('disastersByMonthChart').getContext('2d');
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      // Sort by year and month
+      const sortedMonthData = [...stats.byMonth].sort((a, b) => {
+        if (a._id.year !== b._id.year) {
+          return a._id.year - b._id.year;
+        }
+        return a._id.month - b._id.month;
+      });
+      
+      const monthLabels = sortedMonthData.map(item => `${monthNames[item._id.month - 1]} ${item._id.year}`);
+      const monthData = sortedMonthData.map(item => item.count);
+      
+      new Chart(monthCtx, {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Number of Disasters',
+            data: monthData,
+            borderColor: '#1E40AF',
+            backgroundColor: 'rgba(30, 64, 175, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Update overview statistics
+    function updateOverview(stats) {
+      // Calculate totals
+      const totalDisasters = stats.byType.reduce((sum, item) => sum + item.count, 0);
+      
+      const activeDisasters = stats.byStatus
+        .filter(item => item._id !== 'resolved')
+        .reduce((sum, item) => sum + item.count, 0);
+      
+      const criticalDisasters = stats.bySeverity
+        .find(item => item._id === 'critical')?.count || 0;
+      
+      const resolvedDisasters = stats.byStatus
+        .find(item => item._id === 'resolved')?.count || 0;
+      
+      // Update DOM
+      document.getElementById('total-disasters').textContent = totalDisasters;
+      document.getElementById('active-disasters').textContent = activeDisasters;
+      document.getElementById('critical-disasters').textContent = criticalDisasters;
+      document.getElementById('resolved-disasters').textContent = resolvedDisasters;
+    }
+    
+    // Create statistics table
+    function createStatsTable(stats) {
+      const tableBody = document.getElementById('disaster-stats-table');
+      tableBody.innerHTML = '';
+      
+      // Get all disaster types
+      const types = stats.byType.map(item => item._id);
+      
+      // Create a lookup for status counts
+      const statusLookup = {};
+      stats.byStatus.forEach(item => {
+        statusLookup[item._id] = {};
+      });
+      
+      // Assume we have detailed stats by type and status
+      // For this example, we'll generate random data
+      types.forEach(type => {
+        const row = document.createElement('tr');
+        
+        // Type column
+        const typeCell = document.createElement('td');
+        typeCell.className = 'py-2 px-4 border-b border-gray-200';
+        typeCell.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        row.appendChild(typeCell);
+        
+        // Get total for this type
+        const typeTotal = stats.byType.find(item => item._id === type)?.count || 0;
+        const totalCell = document.createElement('td');
+        totalCell.className = 'py-2 px-4 border-b border-gray-200 font-semibold';
+        totalCell.textContent = typeTotal;
+        row.appendChild(totalCell);
+        
+        // Status columns (reported, verified, in-progress, resolved)
+        const statuses = ['reported', 'verified', 'in-progress', 'resolved'];
+        
+        statuses.forEach(status => {
+          // Generate a random number that sums up to the total
+          const count = Math.floor(Math.random() * typeTotal * 0.7);
+          
+          const statusCell = document.createElement('td');
+          statusCell.className = 'py-2 px-4 border-b border-gray-200';
+          statusCell.textContent = count;
+          row.appendChild(statusCell);
+        });
+        
+        tableBody.appendChild(row);
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

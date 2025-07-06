@@ -1,0 +1,215 @@
+<%- include('partials/header') %>
+
+<div class="hero bg-primary text-white py-16">
+  <div class="container mx-auto px-4">
+    <h1 class="text-4xl font-bold mb-4">Crowdsourced Disaster Relief Platform</h1>
+    <p class="text-xl mb-8">Connecting volunteers, NGOs, and government agencies to respond to natural disasters in real-time.</p>
+    <div class="flex flex-wrap gap-4">
+      <a href="/disasters/map/view" class="bg-white text-primary font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition">View Disaster Map</a>
+      <a href="/disasters/report" class="bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition">Report a Disaster</a>
+      <a href="/help-requests/new" class="bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-yellow-600 transition">Request Help</a>
+    </div>
+  </div>
+</div>
+
+<div class="container mx-auto px-4 py-12">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4 text-primary">Recent Disasters</h2>
+      <div id="recent-disasters" class="space-y-4">
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+      <a href="/disasters" class="block mt-4 text-primary hover:underline">View all disasters →</a>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4 text-primary">Available Resources</h2>
+      <div id="available-resources" class="space-y-4">
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+      <a href="/resources" class="block mt-4 text-primary hover:underline">View all resources →</a>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-2xl font-bold mb-4 text-primary">Help Requests</h2>
+      <div id="help-requests" class="space-y-4">
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div class="animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+      <a href="/help-requests" class="block mt-4 text-primary hover:underline">View all help requests →</a>
+    </div>
+  </div>
+</div>
+
+<div class="bg-gray-100 py-12">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold mb-8 text-center text-primary">How It Works</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-exclamation-triangle text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Report Disasters</h3>
+        <p class="text-gray-600">Report disasters in your area with details, location, and images to alert others.</p>
+      </div>
+      
+      <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-hands-helping text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Coordinate Resources</h3>
+        <p class="text-gray-600">Share available resources and coordinate with others to provide effective relief.</p>
+      </div>
+      
+      <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-map-marked-alt text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Real-time Mapping</h3>
+        <p class="text-gray-600">View disasters, resources, and help requests on an interactive map for better coordination.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fetch recent disasters
+  fetch('/api/disasters')
+    .then(response => response.json())
+    .then(disasters => {
+      const recentDisastersEl = document.getElementById('recent-disasters');
+      recentDisastersEl.innerHTML = '';
+      
+      if (disasters.length === 0) {
+        recentDisastersEl.innerHTML = '<p class="text-gray-500">No disasters reported yet.</p>';
+        return;
+      }
+      
+      disasters.slice(0, 3).forEach(disaster => {
+        const date = new Date(disaster.createdAt).toLocaleDateString();
+        recentDisastersEl.innerHTML += `
+          <div class="border-l-4 border-${getTypeColor(disaster.type)} pl-3">
+            <h3 class="font-semibold">${disaster.title}</h3>
+            <p class="text-sm text-gray-600">${disaster.type.charAt(0).toUpperCase() + disaster.type.slice(1)} • ${date}</p>
+          </div>
+        `;
+      });
+    })
+    .catch(error => console.error('Error fetching disasters:', error));
+  
+  // Fetch available resources
+  fetch('/api/resources')
+    .then(response => response.json())
+    .then(resources => {
+      const availableResourcesEl = document.getElementById('available-resources');
+      availableResourcesEl.innerHTML = '';
+      
+      if (resources.length === 0) {
+        availableResourcesEl.innerHTML = '<p class="text-gray-500">No resources available yet.</p>';
+        return;
+      }
+      
+      resources.slice(0, 3).forEach(resource => {
+        availableResourcesEl.innerHTML += `
+          <div class="border-l-4 border-${getResourceTypeColor(resource.type)} pl-3">
+            <h3 class="font-semibold">${resource.name}</h3>
+            <p class="text-sm text-gray-600">${resource.quantity} ${resource.unit} of ${resource.type}</p>
+          </div>
+        `;
+      });
+    })
+    .catch(error => console.error('Error fetching resources:', error));
+  
+  // Fetch help requests
+  fetch('/api/help-requests')
+    .then(response => response.json())
+    .then(helpRequests => {
+      const helpRequestsEl = document.getElementById('help-requests');
+      helpRequestsEl.innerHTML = '';
+      
+      if (helpRequests.length === 0) {
+        helpRequestsEl.innerHTML = '<p class="text-gray-500">No help requests yet.</p>';
+        return;
+      }
+      
+      helpRequests.slice(0, 3).forEach(request => {
+        helpRequestsEl.innerHTML += `
+          <div class="border-l-4 border-${getUrgencyColor(request.urgency)} pl-3">
+            <h3 class="font-semibold">${request.title}</h3>
+            <p class="text-sm text-gray-600">${request.type.charAt(0).toUpperCase() + request.type.slice(1)} • ${request.urgency.charAt(0).toUpperCase() + request.urgency.slice(1)} urgency</p>
+          </div>
+        `;
+      });
+    })
+    .catch(error => console.error('Error fetching help requests:', error));
+  
+  // Helper functions for colors
+  function getTypeColor(type) {
+    const colors = {
+      earthquake: 'yellow-500',
+      flood: 'blue-500',
+      fire: 'red-500',
+      hurricane: 'purple-500',
+      tsunami: 'blue-700',
+      other: 'gray-500'
+    };
+    return colors[type] || 'gray-500';
+  }
+  
+  function getResourceTypeColor(type) {
+    const colors = {
+      food: 'green-500',
+      water: 'blue-500',
+      medical: 'red-500',
+      shelter: 'yellow-500',
+      clothing: 'purple-500',
+      other: 'gray-500'
+    };
+    return colors[type] || 'gray-500';
+  }
+  
+  function getUrgencyColor(urgency) {
+    const colors = {
+      low: 'green-500',
+      medium: 'yellow-500',
+      high: 'orange-500',
+      critical: 'red-500'
+    };
+    return colors[urgency] || 'gray-500';
+  }
+</script>
+
+<%- include('partials/footer') %>
+

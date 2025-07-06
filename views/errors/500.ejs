@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-16">
+  <div class="max-w-md mx-auto text-center">
+    <h1 class="text-6xl font-bold text-red-500 mb-4">500</h1>
+    <h2 class="text-2xl font-semibold mb-4">Internal Server Error</h2>
+    <p class="text-gray-600 mb-8">Something went wrong! Please try again later.</p>
+    <% if (locals.error) { %>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8 text-left">
+        <p class="font-bold">Error:</p>
+        <p><%= error.message || error %></p>
+      </div>
+    <% } %>
+    <a href="/" class="inline-block bg-primary text-white font-bold py-2 px-6 rounded-md hover:bg-blue-800">
+      Go Home
+    </a>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+

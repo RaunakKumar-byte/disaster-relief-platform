@@ -1,0 +1,511 @@
+<%- include('../partials/header') %>
+
+<%
+function getDisasterIcon(type) {
+  switch (type) {
+    case 'earthquake': return 'mountain';
+    case 'flood': return 'water';
+    case 'hurricane': return 'wind';
+    case 'wildfire': return 'fire';
+    case 'tsunami': return 'water';
+    case 'other': return 'exclamation-circle';
+    default: return 'question-circle';
+  }
+}
+function getStatusClass(status) {
+  switch (status) {
+    case 'active': return 'bg-yellow-500 text-white';
+    case 'contained': return 'bg-blue-500 text-white';
+    case 'resolved': return 'bg-green-500 text-white';
+    default: return 'bg-gray-400 text-white';
+  }
+}
+%>
+
+<% if (!disaster) { %>
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>Error: Disaster not found</p>
+            <% if (locals.error) { %>
+                <p><%= error %></p>
+            <% } %>
+        </div>
+        <div class="mt-4">
+            <a href="/disasters" class="text-primary hover:underline">
+                <i class="fas fa-arrow-left mr-2"></i> Back to All Disasters
+            </a>
+        </div>
+    </div>
+<% } else { %>
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-6">
+            <a href="/disasters" class="text-primary hover:underline flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to All Disasters
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="relative">
+                <% if (disaster.images && disaster.images.length > 0) { %>
+                    <div class="disaster-images-slider h-96 bg-gray-200">
+                        <% disaster.images.forEach(function(image) { %>
+                            <div class="h-full">
+                                <img src="<%= image %>" alt="<%= disaster.title %>" class="w-full h-full object-cover">
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="h-96 bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-<%= getDisasterIcon(disaster.type) %> text-6xl text-gray-400"></i>
+                    </div>
+                <% } %>
+                
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <span class="inline-block px-3 py-1 rounded-full text-white severity-<%= disaster.severity %>">
+                        <%= disaster.severity.toUpperCase() %>
+                    </span>
+                    <span class="inline-block px-3 py-1 rounded-full bg-white text-gray-800 border border-gray-300">
+                        <%= disaster.type.charAt(0).toUpperCase() + disaster.type.slice(1) %>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h1 class="text-3xl font-bold"><%= disaster.title %></h1>
+                    <span class="inline-block px-3 py-1 rounded-full <%= getStatusClass(disaster.status) %>">
+                        <%= disaster.status.charAt(0).toUpperCase() + disaster.status.slice(1) %>
+                    </span>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4"><%= disaster.description %></p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-primary mt-1 mr-2"></i>
+                            <div>
+                                <h3 class="font-semibold">Location</h3>
+                                <p><%= disaster.location.address %></p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <i class="fas fa-calendar-alt text-primary mt-1 mr-2"></i>
+                            <div>
+                                <h3 class="font-semibold">Reported On</h3>
+                                <p><%= new Date(disaster.createdAt).toLocaleString() %></p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <i class="fas fa-user text-primary mt-1 mr-2"></i>
+                            <div>
+                                <h3 class="font-semibold">Reported By</h3>
+                                <% if (disaster.reportedBy && disaster.reportedBy.name) { %>
+                                    <p><%= disaster.reportedBy.name %> (<%= disaster.reportedBy.organization || 'Individual' %>)</p>
+                                <% } else { %>
+                                    <p>Anonymous</p>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <i class="fas fa-users text-primary mt-1 mr-2"></i>
+                            <div>
+                                <h3 class="font-semibold">Affected People</h3>
+                                <p><%= disaster.affectedPeople || 'Unknown' %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-4">Location Map</h2>
+                    <div id="disaster-map" class="mini-map border border-gray-300 rounded-md"></div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-4">Nearby Resources</h2>
+                    <div id="nearby-resources" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold mb-4">Help Requests</h2>
+                    <div id="related-help-requests" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-4">
+                    <a href="/help-requests/new?disasterId=<%= disaster._id %>" class="bg-yellow-500 text-white font-bold py-2 px-6 rounded-md hover:bg-yellow-600">
+                        <i class="fas fa-hands-helping mr-2"></i> Request Help
+                    </a>
+                    <a href="/resources/add?disasterId=<%= disaster._id %>" class="bg-green-500 text-white font-bold py-2 px-6 rounded-md hover:bg-green-600">
+                        <i class="fas fa-box-open mr-2"></i> Provide Resources
+                    </a>
+                    <% if (locals.user && disaster.reportedBy && ((locals.user._id && disaster.reportedBy._id && locals.user._id.toString() === disaster.reportedBy._id.toString()) || (locals.user.role === 'admin'))) { %>
+                        <button id="update-status-btn" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-600">
+                            <i class="fas fa-edit mr-2"></i> Update Status
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <% if (locals.user && disaster.reportedBy && ((locals.user._id && disaster.reportedBy._id && locals.user._id.toString() === disaster.reportedBy._id.toString()) || (locals.user.role === 'admin'))) { %>
+            <div id="status-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                    <h2 class="text-xl font-bold mb-4">Update Disaster Status</h2>
+                    
+                    <form id="update-status-form">
+                        <div class="mb-4">
+                            <label for="status" class="block text-gray-700 font-semibold mb-2">Status</label>
+                            <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="reported" <%= disaster.status === 'reported' ? 'selected' : '' %>>Reported</option>
+                                <option value="verified" <%= disaster.status === 'verified' ? 'selected' : '' %>>Verified</option>
+                                <option value="in-progress" <%= disaster.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+                                <option value="resolved" <%= disaster.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex justify-end gap-4">
+                            <button type="button" id="cancel-update" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-800">
+                                Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        // Helper function for disaster color
+        function getDisasterColor(type) {
+            const colorMap = {
+                earthquake: '#eab308', // yellow
+                flood: '#3b82f6', // blue
+                fire: '#ef4444', // red
+                hurricane: '#8b5cf6', // purple
+                tsunami: '#1d4ed8', // dark blue
+                other: '#6b7280' // gray
+            };
+            
+            return colorMap[type] || '#6b7280';
+        }
+        
+        // Initialize map
+        const map = L.map('disaster-map').setView([
+            <%= disaster.location.coordinates[1] %>, 
+            <%= disaster.location.coordinates[0] %>
+        ], 13);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add disaster marker
+        const disasterIcon = L.divIcon({
+            html: `<i class="fas fa-<%= getDisasterIcon(disaster.type) %>" style="color: ${getDisasterColor('<%= disaster.type %>')}; font-size: 24px;"></i>`,
+            className: 'disaster-icon',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        
+        L.marker([
+            <%= disaster.location.coordinates[1] %>, 
+            <%= disaster.location.coordinates[0] %>
+        ], {
+            icon: disasterIcon
+        }).addTo(map)
+            .bindPopup('<%= disaster.title %>')
+            .openPopup();
+        
+        // Helper functions for resources and help requests
+        function getResourceIcon(type) {
+            const iconMap = {
+                food: 'utensils',
+                water: 'tint',
+                medical: 'medkit',
+                shelter: 'home',
+                clothing: 'tshirt',
+                other: 'box'
+            };
+            
+            return iconMap[type] || 'box';
+        }
+        
+        function getResourceColor(type) {
+            const colorMap = {
+                food: '#22c55e', // green
+                water: '#3b82f6', // blue
+                medical: '#ef4444', // red
+                shelter: '#f59e0b', // yellow
+                clothing: '#8b5cf6', // purple
+                other: '#6b7280' // gray
+            };
+            
+            return colorMap[type] || '#6b7280';
+        }
+        
+        function getUrgencyColor(urgency) {
+            const colorMap = {
+                low: '#10b981', // green
+                medium: '#f59e0b', // yellow
+                high: '#f97316', // orange
+                critical: '#ef4444' // red
+            };
+            
+            return colorMap[urgency] || '#6b7280';
+        }
+        
+        // Fetch nearby resources
+        fetch(`/api/resources/near?lat=<%= disaster.location.coordinates[1] %>&lng=<%= disaster.location.coordinates[0] %>&radius=50`)
+            .then(response => response.json())
+            .then(resources => {
+                const nearbyResourcesEl = document.getElementById('nearby-resources');
+                nearbyResourcesEl.innerHTML = '';
+                
+                if (!resources || resources.length === 0) {
+                    nearbyResourcesEl.innerHTML = '<p class="col-span-full text-gray-500">No resources available nearby.</p>';
+                    return;
+                }
+                
+                // Add resources to map
+                resources.forEach(resource => {
+                    const resourceIcon = L.divIcon({
+                        html: `<i class="fas fa-${getResourceIcon(resource.type)}" style="color: ${getResourceColor(resource.type)}; font-size: 20px;"></i>`,
+                        className: 'resource-icon',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                    
+                    L.marker([
+                        resource.location.coordinates[1], 
+                        resource.location.coordinates[0]
+                    ], {
+                        icon: resourceIcon
+                    }).addTo(map)
+                        .bindPopup(`
+                            <strong>${resource.name}</strong><br>
+                            ${resource.quantity} ${resource.unit} of ${resource.type}<br>
+                            <a href="/resources/${resource._id}" class="text-primary hover:underline">View Details</a>
+                        `);
+                    
+                    // Add to list
+                    nearbyResourcesEl.innerHTML += `
+                        <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                            <h3 class="font-semibold">${resource.name}</h3>
+                            <p class="text-sm">${resource.quantity} ${resource.unit} of ${resource.type}</p>
+                            <p class="text-xs text-gray-500">${resource.location.address}</p>
+                            <a href="/resources/${resource._id}" class="text-primary text-sm hover:underline">View Details</a>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching resources:', error);
+                document.getElementById('nearby-resources').innerHTML = '<p class="text-red-500">Error loading nearby resources.</p>';
+            });
+        
+        // Fetch related help requests
+        fetch(`/api/help-requests/near?lat=<%= disaster.location.coordinates[1] %>&lng=<%= disaster.location.coordinates[0] %>&radius=50`)
+            .then(response => response.json())
+            .then(helpRequests => {
+                const relatedHelpRequestsEl = document.getElementById('related-help-requests');
+                relatedHelpRequestsEl.innerHTML = '';
+                
+                if (!helpRequests || helpRequests.length === 0) {
+                    relatedHelpRequestsEl.innerHTML = '<p class="col-span-full text-gray-500">No help requests related to this disaster yet.</p>';
+                    return;
+                }
+                
+                // Add help requests to map
+                helpRequests.forEach(request => {
+                    const requestIcon = L.divIcon({
+                        html: `<i class="fas fa-hands-helping" style="color: ${getUrgencyColor(request.urgency)}; font-size: 20px;"></i>`,
+                        className: 'help-request-icon',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                    
+                    L.marker([
+                        request.location.coordinates[1], 
+                        request.location.coordinates[0]
+                    ], {
+                        icon: requestIcon
+                    }).addTo(map)
+                        .bindPopup(`
+                            <strong>${request.title}</strong><br>
+                            Need: ${request.type}<br>
+                            Urgency: ${request.urgency.toUpperCase()}<br>
+                            <a href="/help-requests/${request._id}" class="text-primary hover:underline">View Details</a>
+                        `);
+                    
+                    // Add to list
+                    relatedHelpRequestsEl.innerHTML += `
+                        <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-semibold">${request.title}</h3>
+                                <span class="inline-block px-2 py-1 rounded-full text-xs text-white urgency-${request.urgency}">${request.urgency.toUpperCase()}</span>
+                            </div>
+                            <p class="text-sm">Need: ${request.type.charAt(0).toUpperCase() + request.type.slice(1)}</p>
+                            <p class="text-xs text-gray-500">Status: ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</p>
+                            <a href="/help-requests/${request._id}" class="text-primary text-sm hover:underline">View Details</a>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching help requests:', error);
+                document.getElementById('related-help-requests').innerHTML = '<p class="text-red-500">Error loading related help requests.</p>';
+            });
+        
+        // Initialize image slider if there are images
+        <% if (disaster.images && disaster.images.length > 0) { %>
+            document.addEventListener('DOMContentLoaded', function() {
+                const slider = document.querySelector('.disaster-images-slider');
+                
+                // Only initialize slider if there's more than one image
+                if (slider && slider.children.length > 1) {
+                    let currentSlide = 0;
+                    const slides = slider.children;
+                    const totalSlides = slides.length;
+                    
+                    // Create navigation arrows
+                    const prevArrow = document.createElement('button');
+                    prevArrow.className = 'absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center';
+                    prevArrow.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                    
+                    const nextArrow = document.createElement('button');
+                    nextArrow.className = 'absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center';
+                    nextArrow.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    
+                    slider.appendChild(prevArrow);
+                    slider.appendChild(nextArrow);
+                    
+                    // Create indicators
+                    const indicators = document.createElement('div');
+                    indicators.className = 'absolute bottom-4 left-0 right-0 flex justify-center gap-2';
+                    
+                    for (let i = 0; i < totalSlides; i++) {
+                        const dot = document.createElement('button');
+                        dot.className = 'w-3 h-3 rounded-full bg-white bg-opacity-50';
+                        dot.dataset.slide = i;
+                        indicators.appendChild(dot);
+                    }
+                    
+                    slider.appendChild(indicators);
+                    
+                    // Show first slide
+                    showSlide(0);
+                    
+                    // Event listeners
+                    prevArrow.addEventListener('click', () => {
+                        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                        showSlide(currentSlide);
+                    });
+                    
+                    nextArrow.addEventListener('click', () => {
+                        currentSlide = (currentSlide + 1) % totalSlides;
+                        showSlide(currentSlide);
+                    });
+                    
+                    indicators.addEventListener('click', (e) => {
+                        if (e.target.dataset.slide) {
+                            currentSlide = parseInt(e.target.dataset.slide);
+                            showSlide(currentSlide);
+                        }
+                    });
+                    
+                    function showSlide(index) {
+                        // Hide all slides
+                        for (let i = 0; i < totalSlides; i++) {
+                            slides[i].style.display = 'none';
+                        }
+                        
+                        // Show current slide
+                        slides[index].style.display = 'block';
+                        
+                        // Update indicators
+                        const dots = indicators.children;
+                        for (let i = 0; i < dots.length; i++) {
+                            dots[i].className = 'w-3 h-3 rounded-full bg-white bg-opacity-50';
+                        }
+                        dots[index].className = 'w-3 h-3 rounded-full bg-white';
+                    }
+                }
+            });
+        <% } %>
+        
+        // Status update modal
+        <% if (locals.user && disaster.reportedBy && ((locals.user._id && disaster.reportedBy._id && locals.user._id.toString() === disaster.reportedBy._id.toString()) || (locals.user.role === 'admin'))) { %>
+            const updateStatusBtn = document.getElementById('update-status-btn');
+            const statusModal = document.getElementById('status-modal');
+            const cancelUpdateBtn = document.getElementById('cancel-update');
+            const updateStatusForm = document.getElementById('update-status-form');
+            
+            updateStatusBtn.addEventListener('click', () => {
+                statusModal.classList.remove('hidden');
+            });
+            
+            cancelUpdateBtn.addEventListener('click', () => {
+                statusModal.classList.add('hidden');
+            });
+            
+            updateStatusForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const status = document.getElementById('status').value;
+                
+                fetch('/disasters/<%= disaster._id %>/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error updating status: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error updating status. Please try again.');
+                    });
+            });
+        <% } %>
+    </script>
+<% } %>
+
+<%- include('../partials/footer') %>
+

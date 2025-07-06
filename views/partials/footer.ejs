@@ -1,0 +1,75 @@
+</main>
+
+<footer class="bg-gray-800 text-white py-8 mt-auto">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <h3 class="text-xl font-bold mb-4">Disaster Relief Platform</h3>
+        <p class="text-gray-300">Connecting volunteers, NGOs, and government agencies to respond to natural disasters in real-time.</p>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+        <ul class="space-y-2">
+          <li><a href="/" class="text-gray-300 hover:text-white">Home</a></li>
+          <li><a href="/disasters/map/view" class="text-gray-300 hover:text-white">Disaster Map</a></li>
+          <li><a href="/disasters" class="text-gray-300 hover:text-white">Disasters</a></li>
+          <li><a href="/resources" class="text-gray-300 hover:text-white">Resources</a></li>
+          <li><a href="/help-requests" class="text-gray-300 hover:text-white">Help Requests</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-bold mb-4">Actions</h3>
+        <ul class="space-y-2">
+          <li><a href="/disasters/report" class="text-gray-300 hover:text-white">Report a Disaster</a></li>
+          <li><a href="/resources/add" class="text-gray-300 hover:text-white">Add Resources</a></li>
+          <li><a href="/help-requests/new" class="text-gray-300 hover:text-white">Request Help</a></li>
+          <% if (locals.user) { %>
+            <li><a href="/profile" class="text-gray-300 hover:text-white">My Profile</a></li>
+          <% } else { %>
+            <li><a href="/login" class="text-gray-300 hover:text-white">Login / Register</a></li>
+          <% } %>
+        </ul>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-bold mb-4">Contact</h3>
+        <p class="text-gray-300 mb-2">For emergency assistance, please contact local authorities.</p>
+        <p class="text-gray-300">For platform support: support@disasterrelief.org</p>
+        <div class="mt-4 flex space-x-4">
+          <a href="#" class="text-gray-300 hover:text-white">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+      <p>&copy; <%= new Date().getFullYear() %> Disaster Relief Platform. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Mobile menu toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('menu');
+    
+    if (mobileMenuButton && menu) {
+      mobileMenuButton.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+      });
+    }
+  });
+</script>
+</body>
+</html>
+

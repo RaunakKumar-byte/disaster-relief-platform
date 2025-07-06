@@ -1,0 +1,165 @@
+<%- include('../partials/header') %>
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Add Resource</h1>
+  <form action="/resources/add" method="POST" class="bg-white rounded-lg shadow-md p-6">
+    <div class="mb-4">
+      <label for="name" class="block text-gray-700 font-semibold mb-2">Resource Name *</label>
+      <input type="text" id="name" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div class="mb-4">
+      <label for="type" class="block text-gray-700 font-semibold mb-2">Type *</label>
+      <select id="type" name="type" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="food">Food</option>
+        <option value="water">Water</option>
+        <option value="medical">Medical</option>
+        <option value="shelter">Shelter</option>
+        <option value="clothing">Clothing</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="quantity" class="block text-gray-700 font-semibold mb-2">Quantity *</label>
+      <input type="number" id="quantity" name="quantity" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div class="mb-4">
+      <label for="unit" class="block text-gray-700 font-semibold mb-2">Unit *</label>
+      <input type="text" id="unit" name="unit" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div class="mb-4">
+      <label for="description" class="block text-gray-700 font-semibold mb-2">Description</label>
+      <textarea id="description" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="block text-gray-700 font-semibold mb-2">Location *</label>
+      <div id="location-map" class="mini-map mb-4 border border-gray-300 rounded-md" style="height: 300px;"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="latitude" class="block text-gray-700 text-sm mb-1">Latitude *</label>
+          <input type="text" id="latitude" name="latitude" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+        <div>
+          <label for="longitude" class="block text-gray-700 text-sm mb-1">Longitude *</label>
+          <input type="text" id="longitude" name="longitude" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+        </div>
+      </div>
+      <div class="mt-4">
+        <label for="address" class="block text-gray-700 text-sm mb-1">Address *</label>
+        <input type="text" id="address" name="address" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+      <div class="mt-4 flex gap-4">
+        <button type="button" id="use-my-location" class="bg-secondary text-white font-bold py-2 px-4 rounded-md hover:bg-green-600">
+          <i class="fas fa-location-arrow mr-2"></i> Use My Location
+        </button>
+        <button type="button" id="search-location" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-md hover:bg-gray-300">
+          <i class="fas fa-search mr-2"></i> Search Location
+        </button>
+      </div>
+      <div id="search-container" class="mt-4 hidden">
+        <div class="flex gap-2">
+          <input type="text" id="location-search" placeholder="Enter city, address or place" class="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+          <button type="button" id="search-button" class="bg-primary text-white font-bold py-2 px-4 rounded-md hover:bg-blue-800">
+            Search
+          </button>
+        </div>
+        <div id="search-results" class="mt-2"></div>
+      </div>
+    </div>
+    <button type="submit" class="bg-primary text-white font-bold py-2 px-6 rounded-md hover:bg-blue-800">Add Resource</button>
+  </form>
+</div>
+<%- include('../partials/footer') %>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script>
+// Initialize map
+const map = L.map('location-map').setView([20, 0], 2);
+let marker;
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+function updateMarkerPosition(lat, lng) {
+  document.getElementById('latitude').value = lat.toFixed(6);
+  document.getElementById('longitude').value = lng.toFixed(6);
+  if (marker) {
+    marker.setLatLng([lat, lng]);
+  } else {
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker.on('dragend', function() {
+      const position = marker.getLatLng();
+      updateMarkerPosition(position.lat, position.lng);
+      getAddressFromCoordinates(position.lat, position.lng);
+    });
+  }
+  map.setView([lat, lng], 13);
+}
+function getAddressFromCoordinates(lat, lng) {
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.display_name) {
+        document.getElementById('address').value = data.display_name;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching address:', error);
+      alert('Could not fetch address. Please enter it manually.');
+    });
+}
+document.getElementById('use-my-location').addEventListener('click', function() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateMarkerPosition(position.coords.latitude, position.coords.longitude);
+        getAddressFromCoordinates(position.coords.latitude, position.coords.longitude);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        alert('Could not get your location. Please enter it manually.');
+      },
+      { enableHighAccuracy: true }
+    );
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
+});
+document.getElementById('search-location').addEventListener('click', function() {
+  const searchContainer = document.getElementById('search-container');
+  searchContainer.classList.toggle('hidden');
+  if (!searchContainer.classList.contains('hidden')) {
+    document.getElementById('location-search').focus();
+  }
+});
+document.getElementById('search-button').addEventListener('click', function() {
+  const searchTerm = document.getElementById('location-search').value.trim();
+  if (searchTerm) {
+    searchLocation(searchTerm);
+  }
+});
+function searchLocation(searchTerm) {
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}`)
+    .then(response => response.json())
+    .then(results => {
+      const resultsContainer = document.getElementById('search-results');
+      resultsContainer.innerHTML = '';
+      if (results.length === 0) {
+        resultsContainer.innerHTML = '<p class="text-gray-500">No results found.</p>';
+        return;
+      }
+      results.forEach(result => {
+        const btn = document.createElement('button');
+        btn.className = 'block w-full text-left px-2 py-1 hover:bg-gray-200';
+        btn.textContent = result.display_name;
+        btn.onclick = function() {
+          updateMarkerPosition(parseFloat(result.lat), parseFloat(result.lon));
+          document.getElementById('address').value = result.display_name;
+          resultsContainer.innerHTML = '';
+        };
+        resultsContainer.appendChild(btn);
+      });
+    })
+    .catch(error => {
+      console.error('Error searching location:', error);
+      alert('Could not search location. Please enter it manually.');
+    });
+}
+</script> 

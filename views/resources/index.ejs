@@ -1,0 +1,315 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Available Resources</h1>
+    <div>
+      <a href="/resources/add" class="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition">
+        <i class="fas fa-plus mr-2"></i> Add Resource
+      </a>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div class="flex flex-wrap gap-4">
+      <div>
+        <label class="font-semibold block mb-1">Filter by Type:</label>
+        <select id="type-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="all">All Types</option>
+          <option value="food">Food</option>
+          <option value="water">Water</option>
+          <option value="medical">Medical</option>
+          <option value="shelter">Shelter</option>
+          <option value="clothing">Clothing</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="font-semibold block mb-1">Filter by Status:</label>
+        <select id="status-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="all">All Statuses</option>
+          <option value="available" selected>Available</option>
+          <option value="in-transit">In Transit</option>
+          <option value="delivered">Delivered</option>
+          <option value="depleted">Depleted</option>
+        </select>
+      </div>
+      
+      <div class="ml-auto">
+        <label class="font-semibold block mb-1">Sort by:</label>
+        <select id="sort-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="quantity-desc">Highest Quantity</option>
+          <option value="quantity-asc">Lowest Quantity</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <div id="resources-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Resource cards will be loaded here -->
+    <div class="animate-pulse bg-white rounded-lg shadow-md p-4">
+      <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+      <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+      <div class="h-8 bg-gray-200 rounded w-full"></div>
+    </div>
+    <div class="animate-pulse bg-white rounded-lg shadow-md p-4">
+      <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+      <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+      <div class="h-8 bg-gray-200 rounded w-full"></div>
+    </div>
+    <div class="animate-pulse bg-white rounded-lg shadow-md p-4">
+      <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+      <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+      <div class="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+      <div class="h-8 bg-gray-200 rounded w-full"></div>
+    </div>
+  </div>
+  
+  <div id="no-resources" class="hidden text-center py-12">
+    <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+    <h3 class="text-xl font-bold text-gray-500">No resources found</h3>
+    <p class="text-gray-500 mt-2">Try changing your filters or <a href="/resources/add" class="text-primary hover:underline">add a new resource</a>.</p>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sample resource data (in case API fails)
+    const sampleResources = [
+      {
+        _id: 'resource1',
+        name: 'Emergency Food Supplies',
+        type: 'food',
+        quantity: 500,
+        unit: 'kg',
+        description: 'Non-perishable food items including canned goods, rice, and dried foods.',
+        location: {
+          coordinates: [77.2300, 28.6100],
+          address: 'Relief Center, Delhi, India'
+        },
+        status: 'available',
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: 'resource2',
+        name: 'Medical Supplies',
+        type: 'medical',
+        quantity: 200,
+        unit: 'kits',
+        description: 'First aid kits, bandages, antiseptics, and basic medications.',
+        location: {
+          coordinates: [-122.4000, 37.7800],
+          address: 'Medical Center, San Francisco, CA, USA'
+        },
+        status: 'available',
+        createdAt: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+      },
+      {
+        _id: 'resource3',
+        name: 'Clean Drinking Water',
+        type: 'water',
+        quantity: 1000,
+        unit: 'liters',
+        description: 'Bottled drinking water for emergency distribution.',
+        location: {
+          coordinates: [2.3522, 48.8566],
+          address: 'Distribution Center, Paris, France'
+        },
+        status: 'available',
+        createdAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+      },
+      {
+        _id: 'resource4',
+        name: 'Temporary Shelters',
+        type: 'shelter',
+        quantity: 50,
+        unit: 'tents',
+        description: 'Waterproof tents that can accommodate up to 4 people each.',
+        location: {
+          coordinates: [-80.1918, 25.7617],
+          address: 'Emergency Center, Miami, FL, USA'
+        },
+        status: 'in-transit',
+        createdAt: new Date(Date.now() - 259200000).toISOString() // 3 days ago
+      },
+      {
+        _id: 'resource5',
+        name: 'Winter Clothing',
+        type: 'clothing',
+        quantity: 300,
+        unit: 'sets',
+        description: 'Warm clothing including jackets, gloves, and hats for cold weather.',
+        location: {
+          coordinates: [139.6917, 35.6895],
+          address: 'Donation Center, Tokyo, Japan'
+        },
+        status: 'available',
+        createdAt: new Date(Date.now() - 345600000).toISOString() // 4 days ago
+      }
+    ];
+    
+    let resources = [];
+    
+    // Fetch resources from API
+    fetch('/api/resources')
+      .then(response => response.json())
+      .then(data => {
+        resources = data.length > 0 ? data : sampleResources;
+        renderResources(resources);
+        setupFilters(resources);
+      })
+      .catch(error => {
+        console.error('Error fetching resources:', error);
+        resources = sampleResources;
+        renderResources(resources);
+        setupFilters(resources);
+      });
+    
+    // Setup filter event listeners
+    function setupFilters(allResources) {
+      const typeFilter = document.getElementById('type-filter');
+      const statusFilter = document.getElementById('status-filter');
+      const sortFilter = document.getElementById('sort-filter');
+      
+      function applyFilters() {
+        const typeValue = typeFilter.value;
+        const statusValue = statusFilter.value;
+        const sortValue = sortFilter.value;
+        
+        let filtered = [...allResources];
+        
+        // Apply type filter
+        if (typeValue !== 'all') {
+          filtered = filtered.filter(r => r.type === typeValue);
+        }
+        
+        // Apply status filter
+        if (statusValue !== 'all') {
+          filtered = filtered.filter(r => r.status === statusValue);
+        }
+        
+        // Apply sorting
+        switch (sortValue) {
+          case 'date-desc':
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+          case 'date-asc':
+            filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            break;
+          case 'quantity-desc':
+            filtered.sort((a, b) => b.quantity - a.quantity);
+            break;
+          case 'quantity-asc':
+            filtered.sort((a, b) => a.quantity - b.quantity);
+            break;
+        }
+        
+        renderResources(filtered);
+      }
+      
+      typeFilter.addEventListener('change', applyFilters);
+      statusFilter.addEventListener('change', applyFilters);
+      sortFilter.addEventListener('change', applyFilters);
+      
+      // Apply initial filters (to show only available resources by default)
+      applyFilters();
+    }
+    
+    // Render resources to the page
+    function renderResources(resourcesToRender) {
+      const container = document.getElementById('resources-container');
+      const noResources = document.getElementById('no-resources');
+      
+      container.innerHTML = '';
+      
+      if (resourcesToRender.length === 0) {
+        container.classList.add('hidden');
+        noResources.classList.remove('hidden');
+        return;
+      }
+      
+      container.classList.remove('hidden');
+      noResources.classList.add('hidden');
+      
+      resourcesToRender.forEach(resource => {
+        const date = new Date(resource.createdAt).toLocaleDateString();
+        const statusClass = getStatusClass(resource.status);
+        const typeIcon = getTypeIcon(resource.type);
+        
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg shadow-md p-4';
+        
+        card.innerHTML = `
+          <div class="flex items-center mb-3">
+            <div class="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center mr-3">
+              <i class="${typeIcon} text-primary"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-lg">${resource.name}</h3>
+              <p class="text-sm text-gray-500">${resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}</p>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="flex justify-between mb-1">
+              <span class="text-gray-700">Quantity:</span>
+              <span class="font-semibold">${resource.quantity} ${resource.unit}</span>
+            </div>
+            <div class="flex justify-between mb-1">
+              <span class="text-gray-700">Location:</span>
+              <span class="text-right">${resource.location.address}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-700">Added:</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          
+          <p class="text-gray-700 mb-4 line-clamp-2">${resource.description || 'No description provided.'}</p>
+          
+          <div class="flex justify-between items-center">
+            <span class="px-2 py-1 rounded text-xs font-semibold ${statusClass}">
+              ${resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+            </span>
+            <a href="/resources/${resource._id}" class="text-primary hover:underline text-sm">View Details →</a>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+    }
+    
+    // Helper functions
+    function getTypeIcon(type) {
+      const icons = {
+        food: 'fas fa-utensils',
+        water: 'fas fa-tint',
+        medical: 'fas fa-medkit',
+        shelter: 'fas fa-home',
+        clothing: 'fas fa-tshirt',
+        other: 'fas fa-box'
+      };
+      return icons[type] || icons.other;
+    }
+    
+    function getStatusClass(status) {
+      const classes = {
+        available: 'bg-green-100 text-green-800',
+        'in-transit': 'bg-blue-100 text-blue-800',
+        delivered: 'bg-purple-100 text-purple-800',
+        depleted: 'bg-gray-100 text-gray-800'
+      };
+      return classes[status] || 'bg-gray-100 text-gray-800';
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

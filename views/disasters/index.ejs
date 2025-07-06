@@ -1,0 +1,436 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">All Disasters</h1>
+    <div class="flex gap-4">
+      <a href="/disasters/report" class="bg-primary text-white font-bold py-2 px-4 rounded-md hover:bg-blue-800">
+        <i class="fas fa-plus mr-2"></i> Report Disaster
+      </a>
+      <a href="/disasters/map/view" class="bg-secondary text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600">
+        <i class="fas fa-map-marked-alt mr-2"></i> View Map
+      </a>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-wrap gap-4 mb-4">
+      <div>
+        <label class="font-semibold block mb-1">Filter by Type:</label>
+        <select id="type-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="all">All Types</option>
+          <option value="earthquake">Earthquake</option>
+          <option value="flood">Flood</option>
+          <option value="fire">Fire</option>
+          <option value="hurricane">Hurricane</option>
+          <option value="tsunami">Tsunami</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="font-semibold block mb-1">Filter by Severity:</label>
+        <select id="severity-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="all">All Severities</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="font-semibold block mb-1">Filter by Status:</label>
+        <select id="status-filter" class="border border-gray-300 rounded px-3 py-2">
+          <option value="all">All Statuses</option>
+          <option value="reported">Reported</option>
+          <option value="verified">Verified</option>
+          <option value="in-progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="font-semibold block mb-1">Sort by:</label>
+        <select id="sort-by" class="border border-gray-300 rounded px-3 py-2">
+          <option value="date-desc">Date (Newest First)</option>
+          <option value="date-asc">Date (Oldest First)</option>
+          <option value="severity-desc">Severity (High to Low)</option>
+          <option value="severity-asc">Severity (Low to High)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="relative">
+      <input type="text" id="search-input" placeholder="Search disasters..." class="w-full border border-gray-300 rounded-md px-3 py-2 pl-10">
+      <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    </div>
+  </div>
+  
+  <div id="disasters-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Disasters will be loaded here -->
+    <div class="animate-pulse bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="h-40 bg-gray-200"></div>
+      <div class="p-4">
+        <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-10 bg-gray-200 rounded w-full mt-4"></div>
+      </div>
+    </div>
+    <div class="animate-pulse bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="h-40 bg-gray-200"></div>
+      <div class="p-4">
+        <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-10 bg-gray-200 rounded w-full mt-4"></div>
+      </div>
+    </div>
+    <div class="animate-pulse bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="h-40 bg-gray-200"></div>
+      <div class="p-4">
+        <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-10 bg-gray-200 rounded w-full mt-4"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="no-results" class="hidden bg-white rounded-lg shadow-md p-6 text-center">
+    <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
+    <h3 class="text-xl font-bold mb-2">No disasters found</h3>
+    <p class="text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
+    <button id="reset-filters" class="bg-primary text-white font-bold py-2 px-4 rounded-md hover:bg-blue-800">
+      Reset Filters
+    </button>
+  </div>
+  
+  <div class="mt-6 flex justify-center">
+    <button id="load-more" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-md hover:bg-gray-50">
+      Load More
+    </button>
+  </div>
+</div>
+
+<script>
+  let disasters = [];
+  let filteredDisasters = [];
+  let currentPage = 1;
+  const itemsPerPage = 9;
+  
+  // Fetch all disasters
+  fetch('/api/disasters')
+    .then(response => response.json())
+    .then(data => {
+      disasters = data;
+      
+      // If no disasters from API, add sample data
+      if (disasters.length === 0) {
+        disasters = [
+          {
+            _id: 'sample1',
+            title: 'Major Earthquake in Tokyo',
+            description: 'A 7.2 magnitude earthquake has struck Tokyo causing significant damage to infrastructure.',
+            type: 'earthquake',
+            location: {
+              coordinates: [139.6917, 35.6895],
+              address: 'Tokyo, Japan'
+            },
+            severity: 'critical',
+            status: 'reported',
+            createdAt: new Date().toISOString(),
+            images: ['/placeholder.svg?height=300&width=400']
+          },
+          {
+            _id: 'sample2',
+            title: 'Flooding in Mumbai',
+            description: 'Heavy monsoon rains have caused severe flooding in several areas of Mumbai.',
+            type: 'flood',
+            location: {
+              coordinates: [72.8777, 19.0760],
+              address: 'Mumbai, India'
+            },
+            severity: 'high',
+            status: 'in-progress',
+            createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            images: ['/placeholder.svg?height=300&width=400']
+          },
+          {
+            _id: 'sample3',
+            title: 'Wildfire in California',
+            description: 'A fast-moving wildfire has spread across thousands of acres in Northern California.',
+            type: 'fire',
+            location: {
+              coordinates: [-122.4194, 37.7749],
+              address: 'California, USA'
+            },
+            severity: 'high',
+            status: 'in-progress',
+            createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+            images: ['/placeholder.svg?height=300&width=400']
+          },
+          {
+            _id: 'sample4',
+            title: 'Hurricane approaching Florida',
+            description: 'A Category 3 hurricane is approaching the coast of Florida with expected landfall in 24 hours.',
+            type: 'hurricane',
+            location: {
+              coordinates: [-81.5158, 27.6648],
+              address: 'Florida, USA'
+            },
+            severity: 'critical',
+            status: 'reported',
+            createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+            images: ['/placeholder.svg?height=300&width=400']
+          },
+          {
+            _id: 'sample5',
+            title: 'Tsunami Warning in Indonesia',
+            description: 'A tsunami warning has been issued following a 6.9 magnitude earthquake off the coast of Indonesia.',
+            type: 'tsunami',
+            location: {
+              coordinates: [106.8456, -6.2088],
+              address: 'Jakarta, Indonesia'
+            },
+            severity: 'high',
+            status: 'reported',
+            createdAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+            images: ['/placeholder.svg?height=300&width=400']
+          }
+        ];
+      }
+      
+      applyFiltersAndSort();
+    })
+    .catch(error => {
+      console.error('Error fetching disasters:', error);
+      // Add sample data if API fails
+      disasters = [
+        {
+          _id: 'sample1',
+          title: 'Major Earthquake in Tokyo',
+          description: 'A 7.2 magnitude earthquake has struck Tokyo causing significant damage to infrastructure.',
+          type: 'earthquake',
+          location: {
+            coordinates: [139.6917, 35.6895],
+            address: 'Tokyo, Japan'
+          },
+          severity: 'critical',
+          status: 'reported',
+          createdAt: new Date().toISOString(),
+          images: ['/placeholder.svg?height=300&width=400']
+        },
+        {
+          _id: 'sample2',
+          title: 'Flooding in Mumbai',
+          description: 'Heavy monsoon rains have caused severe flooding in several areas of Mumbai.',
+          type: 'flood',
+          location: {
+            coordinates: [72.8777, 19.0760],
+            address: 'Mumbai, India'
+          },
+          severity: 'high',
+          status: 'in-progress',
+          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+          images: ['/placeholder.svg?height=300&width=400']
+        },
+        {
+          _id: 'sample3',
+          title: 'Wildfire in California',
+          description: 'A fast-moving wildfire has spread across thousands of acres in Northern California.',
+          type: 'fire',
+          location: {
+            coordinates: [-122.4194, 37.7749],
+            address: 'California, USA'
+          },
+          severity: 'high',
+          status: 'in-progress',
+          createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+          images: ['/placeholder.svg?height=300&width=400']
+        }
+      ];
+      applyFiltersAndSort();
+    });
+  
+  // Apply filters and sort
+  function applyFiltersAndSort() {
+    const typeFilter = document.getElementById('type-filter').value;
+    const severityFilter = document.getElementById('severity-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
+    const sortBy = document.getElementById('sort-by').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    // Filter disasters
+    filteredDisasters = disasters.filter(disaster => {
+      return (typeFilter === 'all' || disaster.type === typeFilter) &&
+             (severityFilter === 'all' || disaster.severity === severityFilter) &&
+             (statusFilter === 'all' || disaster.status === statusFilter) &&
+             (searchTerm === '' || 
+              disaster.title.toLowerCase().includes(searchTerm) || 
+              disaster.description.toLowerCase().includes(searchTerm) ||
+              disaster.location.address.toLowerCase().includes(searchTerm));
+    });
+    
+    // Sort disasters
+    filteredDisasters.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'date-asc':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'severity-desc':
+          const severityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+          return severityOrder[b.severity] - severityOrder[a.severity];
+        case 'severity-asc':
+          const severityOrderAsc = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+          return severityOrderAsc[a.severity] - severityOrderAsc[b.severity];
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+    
+    // Reset pagination
+    currentPage = 1;
+    
+    // Render disasters
+    renderDisasters();
+  }
+  
+  // Render disasters
+  function renderDisasters() {
+    const container = document.getElementById('disasters-container');
+    const noResults = document.getElementById('no-results');
+    const loadMoreBtn = document.getElementById('load-more');
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (filteredDisasters.length === 0) {
+      container.classList.add('hidden');
+      noResults.classList.remove('hidden');
+      loadMoreBtn.classList.add('hidden');
+      return;
+    }
+    
+    container.classList.remove('hidden');
+    noResults.classList.add('hidden');
+    
+    // Calculate pagination
+    const startIndex = 0;
+    const endIndex = Math.min(currentPage * itemsPerPage, filteredDisasters.length);
+    const disastersToShow = filteredDisasters.slice(startIndex, endIndex);
+    
+    // Show or hide load more button
+    if (endIndex >= filteredDisasters.length) {
+      loadMoreBtn.classList.add('hidden');
+    } else {
+      loadMoreBtn.classList.remove('hidden');
+    }
+    
+    // Render each disaster
+    disastersToShow.forEach(disaster => {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+      
+      // Get severity color
+      const severityColors = {
+        low: 'bg-green-500',
+        medium: 'bg-yellow-500',
+        high: 'bg-orange-500',
+        critical: 'bg-red-500'
+      };
+      
+      // Get status color
+      const statusColors = {
+        reported: 'bg-yellow-100 text-yellow-800',
+        verified: 'bg-blue-100 text-blue-800',
+        'in-progress': 'bg-purple-100 text-purple-800',
+        resolved: 'bg-green-100 text-green-800'
+      };
+      
+      // Format date
+      const date = new Date(disaster.createdAt);
+      const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Get image URL or placeholder
+      const imageUrl = disaster.images && disaster.images.length > 0 
+        ? disaster.images[0] 
+        : `/placeholder.svg?height=300&width=400&text=${encodeURIComponent(disaster.type)}`;
+      
+      card.innerHTML = `
+        <div class="relative h-48 bg-gray-200">
+          <img src="${imageUrl}" alt="${disaster.title}" class="w-full h-full object-cover">
+          <div class="absolute top-0 right-0 m-2">
+            <span class="inline-block px-2 py-1 rounded text-white ${severityColors[disaster.severity] || 'bg-gray-500'}">
+              ${disaster.severity.toUpperCase()}
+            </span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+            <h2 class="text-white text-xl font-bold">${disaster.title}</h2>
+          </div>
+        </div>
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="inline-block px-2 py-1 rounded text-sm ${statusColors[disaster.status] || 'bg-gray-100 text-gray-800'}">
+              ${disaster.status.charAt(0).toUpperCase() + disaster.status.slice(1)}
+            </span>
+            <span class="text-sm text-gray-500">${formattedDate}</span>
+          </div>
+          <p class="text-gray-600 mb-2">${disaster.description.length > 100 ? disaster.description.substring(0, 100) + '...' : disaster.description}</p>
+          <p class="text-sm text-gray-500 mb-4">
+            <i class="fas fa-map-marker-alt mr-1"></i> ${disaster.location.address}
+          </p>
+          <a href="/disasters/${disaster._id}" class="block w-full bg-primary text-white text-center font-bold py-2 rounded-md hover:bg-blue-800 transition">
+            View Details
+          </a>
+        </div>
+      `;
+      
+      container.appendChild(card);
+    });
+  }
+  
+  // Event listeners for filters
+  document.getElementById('type-filter').addEventListener('change', applyFiltersAndSort);
+  document.getElementById('severity-filter').addEventListener('change', applyFiltersAndSort);
+  document.getElementById('status-filter').addEventListener('change', applyFiltersAndSort);
+  document.getElementById('sort-by').addEventListener('change', applyFiltersAndSort);
+  
+  // Event listener for search input
+  document.getElementById('search-input').addEventListener('input', debounce(applyFiltersAndSort, 300));
+  
+  // Event listener for reset filters button
+  document.getElementById('reset-filters').addEventListener('click', function() {
+    document.getElementById('type-filter').value = 'all';
+    document.getElementById('severity-filter').value = 'all';
+    document.getElementById('status-filter').value = 'all';
+    document.getElementById('sort-by').value = 'date-desc';
+    document.getElementById('search-input').value = '';
+    applyFiltersAndSort();
+  });
+  
+  // Event listener for load more button
+  document.getElementById('load-more').addEventListener('click', function() {
+    currentPage++;
+    renderDisasters();
+  });
+  
+  // Debounce function for search input
+  function debounce(func, delay) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+</script>
+
+<%- include('../partials/footer') %>
+

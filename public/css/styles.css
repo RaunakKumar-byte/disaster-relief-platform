@@ -1,0 +1,23 @@
+/* Map container styles */
+.map-container {
+    height: 400px !important;
+    width: 100% !important;
+    z-index: 1;
+  }
+  
+  .mini-map {
+    height: 300px !important;
+    width: 100% !important;
+    z-index: 1;
+  }
+  
+  /* Fix for Leaflet controls */
+  .leaflet-control-container {
+    z-index: 2;
+  }
+  
+  .leaflet-popup-content-wrapper {
+    z-index: 2;
+  }
+  
+  
