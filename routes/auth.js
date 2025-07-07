@@ -95,7 +95,7 @@ const hashedPassword = await bcrypt.hash(password, salt)
       organization: organization || "",
       phone: phone || "",
     })
-    newUser.password = hashedPassword 
+    
 
 
     await newUser.save()
