@@ -6,7 +6,7 @@ const User = require("../models/User")
 // Login page
 router.get("/login", (req, res) => {
   if (req.isAuthenticated()) {
-    return res.redirect("/profile")
+    return res.redirect("/auth/profile")
   }
   res.render("auth/login", { title: "Login" })
 })
@@ -14,7 +14,7 @@ router.get("/login", (req, res) => {
 // Register page
 router.get("/register", (req, res) => {
   if (req.isAuthenticated()) {
-    return res.redirect("/profile")
+    return res.redirect("/auth/profile")
   }
   res.render("auth/register", { title: "Register" })
 })
@@ -43,7 +43,7 @@ router.post("/login", async (req, res, next) => {
       if (err) {
         return next(err)
       }
-      const redirectTo = req.session.returnTo || "/profile"
+      const redirectTo = req.session.returnTo || "/auth/profile"
       delete req.session.returnTo
       res.redirect(redirectTo)
     })
