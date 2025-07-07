@@ -90,7 +90,7 @@ const hashedPassword = await bcrypt.hash(password, salt)
     const newUser = new User({
       name,
       email,
-      password,
+      password: hashedPassword,
       role: role || "volunteer",
       organization: organization || "",
       phone: phone || "",
