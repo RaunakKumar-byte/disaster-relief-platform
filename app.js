@@ -18,7 +18,7 @@ const apiRoutes = require("./routes/api")
 const app = express()
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/disaster-relief"
+const MONGODB_URI = process.env.MONGODB_URI
 console.log("MongoDB URI:", MONGODB_URI)
 
 // Session secret
